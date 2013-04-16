@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.core.files.images import ImageFile
+from django.db.models.signals import post_save
 from django.db.models.query import QuerySet
 from django.test import TestCase
 from django_images.models import Thumbnail
 
 import factory
+from django_images.models import original_changed
 from taggit.models import Tag
 
 from ..models import Pin, Image
@@ -35,24 +37,31 @@ class TagFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'tag_{}'.format(n))
 
 
-class ImageFactory(factory.Factory):
+class ImageFactory(factory.DjangoModelFactory):
     FACTORY_FOR = Image
 
     image = factory.LazyAttribute(lambda a: ImageFile(open(LOGO_PATH, 'rb')))
 
     @factory.post_generation
     def create_thumbnails(self, create, extracted, **kwargs):
-        # django-images deletes all thumbnails when the "post_save" signal
-        # is emitted on the original image, which is done after image.save()
-        # call. Because of how DjangoModelFactory post_generation works
-        # that happens after all post generation hooks are finished, so all
-        # thumbnails generated in this method are deleted. To work around
-        # it we derive ImageFactory from factory.Factory and call save()
-        # manually (which is needed to put the row in database and get the
-        # primary key back).
-        self.save()
         for size in settings.IMAGE_SIZES.keys():
             Thumbnail.objects.get_or_create_at_size(self.pk, size)
+
+    @classmethod
+    def create(cls, **kwargs):
+        """
+        Create a new instance of the Image model
+
+        Disconnect the original_changed receiver from the post_save signal
+        in order to avoid deleting thumbnail objects that are being generated
+        in create_thumbnails() method. Factory Boy saves object after
+        all post generation hooks are called, which emits the post_save
+        signal for it.
+        """
+        post_save.disconnect(original_changed)
+        image = super(ImageFactory, cls).create(**kwargs)
+        post_save.connect(receiver=original_changed)
+        return image
 
 
 class PinFactory(factory.DjangoModelFactory):
