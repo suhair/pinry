@@ -61,7 +61,7 @@ class ImageResourceTest(ResourceTestCase):
 class PinResourceTest(ResourceTestCase):
     def setUp(self):
         super(PinResourceTest, self).setUp()
-        self.user = UserFactory(password='password')
+        self.user = UserFactory()
         self.api_client.client.login(username=self.user.username, password='password')
 
     @mock.patch('requests.get', mock_requests_get)
@@ -171,7 +171,7 @@ class PinResourceTest(ResourceTestCase):
 
     def test_put_detail_unauthorized(self):
         uri = '/api/v1/pin/{}/'.format(PinFactory(submitter=self.user).pk)
-        user = UserFactory(password='password')
+        user = UserFactory()
         self.api_client.client.login(username=user.username, password='password')
         response = self.api_client.put(uri, format='json', data={})
         self.assertHttpUnauthorized(response)

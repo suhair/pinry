@@ -12,7 +12,7 @@ __all__ = ['CreateImageTest']
 
 class CreateImageTest(TestCase):
     def setUp(self):
-        self.user = UserFactory(password='password')
+        self.user = UserFactory()
         self.client.login(username=self.user.username, password='password')
 
     def test_get_browser(self):
