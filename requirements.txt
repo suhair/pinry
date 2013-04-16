@@ -4,7 +4,7 @@ South
 django-tastypie==0.9.12
 django-braces
 mock
-factory-boy
+factory-boy>=2.0.2,<2.1
 django_compressor
 requests
 http://github.com/kklimonda/django-images/tarball/master#egg=django-images

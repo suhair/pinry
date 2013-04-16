@@ -12,44 +12,57 @@ from ..models import Pin, Image
 from ...users.models import User
 
 
-TEST_IMAGE_PATH = 'logo.png'
+LOGO_PATH = 'logo.png'
 
 
-class UserFactory(factory.Factory):
+class UserFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = User
+
     username = factory.Sequence(lambda n: 'user_{}'.format(n))
     email = factory.Sequence(lambda n: 'user_{}@example.com'.format(n))
+    password = factory.PostGenerationMethodCall('set_password', 'password')
 
-    @factory.post_generation(extract_prefix='password')
-    def set_password(self, create, extracted, **kwargs):
-        self.set_password(extracted)
-        self.save()
-
-    @factory.post_generation(extract_prefix='user_permissions')
-    def set_user_permissions(self, create, extracted, **kwargs):
-        self.user_permissions = Permission.objects.filter(codename__in=['add_pin', 'add_image'])
+    @factory.post_generation
+    def user_permissions(self, create, extracted, **kwargs):
+        perm_codenames = ['add_pin', 'add_image']
+        permissions = Permission.objects.filter(codename__in=perm_codenames)
+        self.user_permissions = permissions
 
 
-class TagFactory(factory.Factory):
+class TagFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = Tag
+
     name = factory.Sequence(lambda n: 'tag_{}'.format(n))
 
 
 class ImageFactory(factory.Factory):
     FACTORY_FOR = Image
 
-    image = factory.LazyAttribute(lambda a: ImageFile(open(TEST_IMAGE_PATH, 'rb')))
+    image = factory.LazyAttribute(lambda a: ImageFile(open(LOGO_PATH, 'rb')))
 
-    @factory.post_generation()
+    @factory.post_generation
     def create_thumbnails(self, create, extracted, **kwargs):
+        # django-images deletes all thumbnails when the "post_save" signal
+        # is emitted on the original image, which is done after image.save()
+        # call. Because of how DjangoModelFactory post_generation works
+        # that happens after all post generation hooks are finished, so all
+        # thumbnails generated in this method are deleted. To work around
+        # it we derive ImageFactory from factory.Factory and call save()
+        # manually (which is needed to put the row in database and get the
+        # primary key back).
+        self.save()
         for size in settings.IMAGE_SIZES.keys():
             Thumbnail.objects.get_or_create_at_size(self.pk, size)
 
 
-class PinFactory(factory.Factory):
+class PinFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = Pin
+
     submitter = factory.SubFactory(UserFactory)
     image = factory.SubFactory(ImageFactory)
 
-    @factory.post_generation(extract_prefix='tags')
-    def add_tags(self, create, extracted, **kwargs):
+    @factory.post_generation
+    def tags(self, create, extracted, **kwargs):
         if isinstance(extracted, Tag):
             self.tags.add(extracted)
         elif isinstance(extracted, list):
@@ -66,7 +79,8 @@ class PinFactoryTest(TestCase):
 
     def test_custom_tag(self):
         custom = 'custom_tag'
-        self.assertEqual(PinFactory(tags=Tag.objects.create(name=custom)).tags.get(pk=1).name, custom)
+        pin = PinFactory(tags=Tag.objects.create(name=custom))
+        self.assertEqual(pin.tags.get(pk=1).name, custom)
 
     def test_custom_tags_list(self):
         tags = TagFactory.create_batch(2)
