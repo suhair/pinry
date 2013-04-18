@@ -17,9 +17,9 @@
                 'username': '{{ pin.submitter.username }}'
             },
             'tags': [
-                '{% for tag in pin.tags.all %} {{ tag }} {%  endfor %}',
+                {% for tag in pin.tags.all %} '{{ tag }}', {%  endfor %}
             ]
-        }
+        };
     createBox(pin, false);
     });
     </script>

@@ -15,7 +15,8 @@
                         <img src="http://gravatar.com/avatar/{{submitter.gravatar}}.jpg">
                     </div>
                     <div class="text pull-left">
-                        <span class="dim">pinned by</span> {{submitter.username}}
+                        <span class="dim">pinned by</span>
+                        <a href="/pins/user/{{submitter.username}}/">{{submitter.username}}</a>
                         {{#if tags}}
                             <br /><span class="dim">in</span>
                         {{#each tags}}
