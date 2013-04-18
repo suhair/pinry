@@ -37,3 +37,8 @@ class CreateImage(JSONResponseMixin, LoginRequiredMixin, CreateView):
 
 class PinDetail(DetailView):
     model = Pin
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(PinDetail, self).get_context_data(**kwargs)
+        kwargs['standard'] = kwargs['object'].image.get_by_size('standard')
+        return kwargs

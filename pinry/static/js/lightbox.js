@@ -44,7 +44,8 @@ $(window).load(function() {
 
 
     // Start View Functions
-    function createBox(context) {
+    window.createBox = function(context, allowClosing) {
+        allowClosing = typeof allowClosing !== 'undefined' ? allowClosing : true;
         freezeScroll();
         $('body').append(renderTemplate('#lightbox-template', context));
         var box = $('.lightbox-background');
@@ -62,6 +63,10 @@ $(window).load(function() {
         });
         if ($('.lightbox-wrapper').height()+140 > $(window).height())
             $('.lightbox-background').height($('.lightbox-wrapper').height()+140);
+
+        if (!allowClosing) {
+            return;
+        }
 
         box.click(function() {
             $(this).fadeOut(200);

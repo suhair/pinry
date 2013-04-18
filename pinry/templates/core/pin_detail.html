@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block extra_js %}
+    <script>
+    $(window).load(function() {
+        var pin = {
+            'description': '{{ pin.description }}',
+            'image': {
+                'standard': {
+                    'height': '{{ standard.height }}',
+                    'width': '{{ standard.width }}',
+                    'image': '{{ standard.image.url }}'
+                }
+            },
+            'submitter': {
+                'gravatar': '{{ pin.submitter.gravatar }}',
+                'username': '{{ pin.submitter.username }}'
+            },
+            'tags': [
+                '{% for tag in pin.tags.all %} {{ tag }} {%  endfor %}',
+            ]
+        }
+    createBox(pin, false);
+    });
+    </script>
+{% endblock %}
