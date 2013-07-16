@@ -9,3 +9,4 @@ django_compressor
 requests
 http://github.com/kklimonda/django-images/tarball/master#egg=django-images
 http://github.com/hcarvalhoalves/django-taggit/tarball/master#egg=django-taggit
+django-extensions

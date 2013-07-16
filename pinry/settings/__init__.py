@@ -88,6 +88,7 @@ INSTALLED_APPS = (
     'django_images',
     'pinry.core',
     'pinry.users',
+    'django_extensions'
 )
 
 IMAGE_PATH = 'pinry.core.utils.upload_path'
